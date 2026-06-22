@@ -12,7 +12,8 @@ public class JavaCup {
         System.out.println("Press number3: ");
         int k = scanner.nextInt();
         temp();
-        stringProcessorUnoptimized();
+        //stringProcessorUnoptimized();
+        stringProcessorOptimized();
         eval(i, j, k);
     }
     public static void eval(int i, int j, int k)
@@ -39,6 +40,15 @@ public class JavaCup {
             result += i;
         }
         System.out.println("Unoptimized processing done. Length: " + result.length());
+    }
+
+    public static void stringProcessorOptimized() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 100000; i++) {
+            sb.append(i);
+        }
+        String result = sb.toString();
+        System.out.println("Optimized processing done. Length: " + result.length());
     }
 
 }
