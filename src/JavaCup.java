@@ -23,11 +23,11 @@ public class JavaCup {
         else { System.out.println("NO"); }
     }
     public static void temp() {
-        ArrayList a = new ArrayList();
-        for (int i = 0; i < 10000; i++)
-        {
+        long sum = 0;
+
+        for (int i = 0; i < 10000; i++) {
             for (int j = 0; j < 20000; j++) {
-                a.add(i + j);
+                sum += (i + j);
             }
         }
     }
