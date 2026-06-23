@@ -19,7 +19,7 @@
 * **مصرف پردازنده (CPU):** همان‌طور که در نمودارهای درخت فراخوانی (Call Tree) و لیست متدها مشخص است، توابع مرتبط با متد `temp` (به ویژه `Integer.valueOf` و `ArrayList.add`) بار پردازشی بسیار بالایی ایجاد کرده و بخش عمده‌ای از زمان اجرای برنامه (بیش از ۱۰ ثانیه) را به خود اختصاص داده‌اند.
 
   ![Call Tree CPU - Before Optimization](pic/prev1.png)
-  ![Method List CPU - Before Optimization](pic/prev3.jpg)
+  ![Method List CPU - Before Optimization](pic/prev3.png)
 
 * **تخصیص حافظه (Memory Allocations):** پروفایل‌گیری از حافظه نشان داد که متد `temp` یک فاجعه در مدیریت رم ایجاد کرده است. این متد به تنهایی باعث تخصیص حدود **۲.۸ گیگابایت** حافظه و ساخت میلیون‌ها آبجکت اضافی در RAM شده است.
 
@@ -38,9 +38,69 @@
 
 * **بهبود چشمگیر پردازنده (CPU):** در اسنپ‌شات‌های جدید، زمان اجرای متد `temp` به قدری کاهش یافته که کلاً از صدر لیست توابع پرمصرف حذف شده است. زمان‌های ثبت شده در این مرحله عمدتاً مربوط به توقف طبیعی برنامه برای دریافت ورودی از کاربر (`Scanner.nextInt`) می‌باشد.
 
-  ![Call Tree CPU - After Optimization](pic/after1.jpg)
-  ![Method List CPU - After Optimization](pic/after3.jpg)
+  ![Call Tree CPU - After Optimization](pic/after1.png)
+  ![Method List CPU - After Optimization](pic/after3.png)
 
 * **حذف کامل سربار حافظه (Zero Allocations):** بررسی وضعیت مموری نشان می‌دهد که تخصیص ۲.۸ گیگابایتی کاملاً از بین رفته است. متد `temp` دیگر هیچ شیء جدیدی در حافظه نمی‌سازد و مصرف رمِ آن بهینه شده است.
 
-  ![Memory Allocations - After Optimization](pic/after2.jpg)
+  ![Memory Allocations - After Optimization](pic/after2.png)
+
+## گزارش بخش دوم: پروفایلینگ قطعه کد جدید
+
+در این بخش مشابه قسمت قبل ابتدا تابعی غیر بهینه در کلاس javacup ایجاد کرده و سپس با کمک پروفایلینگ آن را بررسی کرده و بهینه سازی می کنیم.
+
+### 1. قطعه کد غیر بهینه جدید
+در این قسمت تابعی که اضافه می کنیم تابعی برای concat کردن رشته ها در جاوا است که در این روش به صورت زیر پیاده سازی شده است.
+
+```java
+public static void stringProcessorUnoptimized() {
+        String result = "";
+        for (int i = 0; i < 100000; i++) {
+            result += i;
+        }
+        System.out.println("Unoptimized processing done. Length: " + result.length());
+    }
+
+```
+
+در این حالت چون از قابلیت StringBuilder در جاوا استفاده نشده است، تعداد اشیا ساخته شده زیاد می شود و در نتیجه عملکرد تابع بهینه نخواهد بود.
+
+### 2. پروفایلینگ کد غیر بهینه
+در این بخش برای بررسی ادعای خود با ابزار yourkit کد را مشابه بخش اول آزمایش پروفایل می کنیم و مصرف منابع آن را بررسی می کنیم.
+
+وضعیت CPU در طول اجرای کد غیر بهینه:
+![Call Tree CPU - Before Optimization](pic/part2before1.png)
+![Method List CPU - Before Optimization](pic/part2before2.png)
+
+وضعیت حافظه در طول اجرای کد غیر بهینه:
+![Memory Allocations - Before Optimization](pic/part2before3.png)
+
+همانطور که در توابع بالا مشخص است تابع جدید تعریف شده در هر دو متریک ضعیف عمل می کند.
+
+### 3. جایگزینی با کد بهینه
+در این قسمت تابع جدیدی تعریف می کنیم که این بار از StringBuilder استفاده بکنیم.
+```java
+public static void stringProcessorOptimized() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 100000; i++) {
+            sb.append(i);
+        }
+        String result = sb.toString();
+        System.out.println("Optimized processing done. Length: " + result.length());
+    }
+
+```
+
+در این روش جدید دیگر احتیاجی به ساخته شدن شی برای هر بار تغییر رشته نیست و در نتیجه انتظار داریم عملکرد بهتر شود.
+
+### 4. پروفایلینگ کد بهینه سازی شده
+در این بخش نیز مشابه بخش قبل همان متریک ها را برای اجرای کد جدید بررسی می کنیم.
+
+وضعیت CPU در طول اجرای کد بهینه سازی شده:
+![Call Tree CPU - After Optimization](pic/part2after1.png)
+![Method List CPU - After Optimization](pic/part2after2.png)
+
+وضعیت حافظه در طول اجرای کد بهینه سازی شده:
+![Memory Allocations - After Optimization](pic/part2after3.png)
+
+همانطور که انتظار داشتیم در کد بهینه سازی شده تابع جدید دیگر از منابع به طور مناسب و کم استفاده می کند.
